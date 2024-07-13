@@ -79,11 +79,6 @@ func decode(toDecode string, alphabet map[rune]string) (string, error) {
 	return decodedBuilder.String(), nil
 }
 
-func bruteForceDecode(toDecode string) string {
-
-	return toDecode
-}
-
 func bruteForceDecodeWithStopWord(toDecode string, stopWord string, alphabetNext map[rune]string) string {
 	baseAlphabet, _ := parseAlphabetFromJSON("base-alphabet.json")
 
