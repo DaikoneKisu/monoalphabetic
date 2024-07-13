@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"strings"
 )
 
 func main() {
+	alphabetNext, _ := parseAlphabetFromJSON("alphabet-next.json")
+
 	encodeAlphabet, err := parseAlphabetFromJSON("alphabet.json")
 
 	if err != nil {
@@ -40,6 +43,8 @@ func main() {
 	}
 
 	fmt.Println(decoded)
+
+	bruteForceDecodeWithStopWord("WJRAKGT", "CIPHERS", alphabetNext)
 }
 
 func encode(toEncode string, alphabet map[rune]string) (string, error) {
@@ -74,6 +79,66 @@ func decode(toDecode string, alphabet map[rune]string) (string, error) {
 	return decodedBuilder.String(), nil
 }
 
+func bruteForceDecode(toDecode string) string {
+
+	return toDecode
+}
+
+func bruteForceDecodeWithStopWord(toDecode string, stopWord string, alphabetNext map[rune]string) string {
+	baseAlphabet, _ := parseAlphabetFromJSON("base-alphabet.json")
+
+	alphabetPrevious, _ := parseAlphabetFromJSON("alphabet-previous.json")
+
+	toDecode = strings.ToLower(toDecode)
+	stopWord = strings.ToLower(stopWord)
+
+	changingAlphabet := map[rune]string{}
+
+	maps.Copy(changingAlphabet, baseAlphabet)
+
+	var iterations uint64 = 0
+
+	for {
+		iterations += 1
+		fmt.Printf("Iteration: %d\n", iterations)
+		fmt.Println()
+
+		decoded, _ := decode(toDecode, changingAlphabet)
+
+		fmt.Println("Alphabet: " + printAlphabetAsJSONString(changingAlphabet))
+		fmt.Println("String decoded: " + decoded)
+
+		if strings.Contains(decoded, stopWord) {
+			return decoded
+		}
+
+		changingAlphabet['a'] = alphabetNext[rune(changingAlphabet['a'][0])]
+
+		if changingAlphabet['a'] == baseAlphabet['a'] {
+			for k := range changingAlphabet {
+				previous := alphabetPrevious[rune(changingAlphabet[k][0])]
+				previousInBaseAlphabet := alphabetPrevious[rune(baseAlphabet[k][0])]
+				if k != 'a' {
+					fmt.Println(string(k), previous)
+					fmt.Println(previousInBaseAlphabet)
+					if previous == previousInBaseAlphabet {
+						if k == 'b' {
+							fmt.Println("b:" + alphabetNext[rune(changingAlphabet[k][0])])
+						}
+						changingAlphabet[k] = alphabetNext[rune(changingAlphabet[k][0])]
+					}
+					previous = changingAlphabet[k]
+					previousInBaseAlphabet = baseAlphabet[k]
+				}
+			}
+		}
+	}
+}
+
+func frequencyAnalysisDecode(toDecode string) string {
+	return toDecode
+}
+
 func parseAlphabetFromJSON(filepath string) (map[rune]string, error) {
 	jsonFile, err := os.Open(filepath)
 
@@ -100,4 +165,15 @@ func parseAlphabetFromJSON(filepath string) (map[rune]string, error) {
 	}
 
 	return alphabet, nil
+}
+
+func printAlphabetAsJSONString(alphabet map[rune]string) string {
+	stringMap := make(map[string]string)
+	for k, v := range alphabet {
+		stringMap[string(k)] = v
+	}
+
+	jsonString, _ := json.Marshal(stringMap)
+
+	return string(jsonString)
 }
